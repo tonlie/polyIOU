@@ -1,0 +1,95 @@
+<dom-module id="new-page">
+  <style>
+    :host {
+      display: none;
+    }
+    :host([active]) {
+      display: block;
+    }
+    paper-card {
+      display: block;
+      width: 95vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+  <template>
+
+    <h3>This is the <b>New</b>-Page</h3>
+
+    <paper-card heading="[[potName]]" image="http://placehold.it/600x150/3f51b5/000000">
+      <div class="card-content">
+        <paper-input
+          id="potNameInput"
+          label="Pot Name"
+          value = "{{potName}}"
+          required
+          auto-validate
+          error-message="Empty input!">
+        </paper-input>
+        <paper-textarea
+          id="potDescInput"
+          label="Pot description"
+          char-counter
+          maxlength="500"
+          max-rows="5">
+        </paper-textarea>
+        <paper-input
+          id="userNameInput"
+          label="Your Name"
+          required
+          auto-validate
+          error-message="Empty input!">
+        </paper-input>
+
+        <gold-email-input id="emailInput" value="" required auto-validate>
+        </gold-email-input>
+      </div>
+      <div class="card-actions">
+        <paper-button autofocus on-tap="addPot">Save</paper-button>
+      </div>
+    </paper-card>
+  </template>
+
+  <script>
+    Polymer({
+      is: "new-page",
+
+      properties: {
+        active: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true
+        }
+      },
+
+      addPot: function() {
+        if(this.$.potNameInput.validate() &&
+           this.$.userNameInput.validate() &&
+           this.$.emailInput.validate()) {
+
+          // create ID's
+          var newPotKey = db.ref().child('pots').push().key;
+          var newPotUserKey =
+            db.ref().child('pots/' + newPotKey + '/users/').push().key;
+
+          // add new pot
+          db.ref().child('pots/' + newPotKey).set({
+            name: this.$.potNameInput.value,
+            description: this.$.potDescInput.value,
+            ownerId: newPotUserKey
+          });
+
+          // add pot owner
+          db.ref().child('pots/' + newPotKey + '/users/' + newPotUserKey).set({
+            name: this.$.userNameInput.value,
+            email: this.$.emailInput.value
+          });
+
+          // redirect to new pot
+          this.set('route.path', '/pot/' + newPotKey);
+        }
+      }
+    });
+  </script>
+</dom-module>

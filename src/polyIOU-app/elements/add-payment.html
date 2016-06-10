@@ -1,0 +1,118 @@
+<link rel="import" href="split-list.html">
+
+<dom-module id="add-payment">
+  <style>
+    :host {
+      display: block;
+    }
+
+    paper-card {
+      width: 100%;
+    }
+    paper-item {
+      width: 100px;
+      padding: 6px 10px;
+      margin: 2px 5px;
+      display: block;
+    }
+    label {
+      align-self: center;
+      color: #212121;
+      -webkit-appearance: none;
+      text-align: inherit;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+    }
+  </style>
+  <template>
+
+    <paper-card heading="Add payment">
+      <div class="card-content">
+        <paper-input id="inputItemName" label="Item name"></paper-input>
+        <paper-input id="inputItemAmount"
+                     label="Amount"
+                     type="number"
+                     value={{total}}>
+          <div suffix> €</div>
+        </paper-input>
+
+        <!-- payer dropdown -->
+        <paper-dropdown-menu label="Payer">
+          <paper-listbox id="payerListbox"
+                         class="dropdown-content"
+                         selected="{{selectedPayer}}"
+                         attr-for-selected="id">
+            <template is="dom-repeat"
+                      items="[[payers]]"
+                      as="payer"
+                      index-as="index">
+              <paper-item id="[[payer.uid]]">[[payer.name]]</paper-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <br />
+
+        <!-- Split selector -->
+        <label id="splitSelectorLabel">Split</label>
+        <paper-radio-group selected="{{splitSelector}}"
+                           aria-labelledby="splitSelectorLabel">
+          <paper-radio-button name="equal">equal</paper-radio-button>
+          <paper-radio-button name="percent">percentage</paper-radio-button>
+          <paper-radio-button name="fixed">fixed</paper-radio-button>
+        </paper-radio-group>
+
+        <!-- split overview -->
+        <split-list data="[[payers]]"
+                    total="[[total]]"
+                    split-selector="[[splitSelector]]">
+        </split-list>
+      </div>
+
+      <!-- Buttons -->
+      <div class="card-actions">
+        <paper-button raised>Add payment</paper-button>
+        <paper-button raised>Add another payment</paper-button>
+        <paper-button raised>Cancel</paper-button>
+      </div>
+    </paper-card>
+
+
+    <br />
+    Selected Payer: [[selectedPayer]]
+    <br />
+    Selected Split: [[splitSelector]]
+
+  </template>
+  <script>
+    Polymer({
+      is: "add-payment",
+
+      properties: {
+        pot: {
+          type: String
+        },
+        payers: {
+          type: Object
+        }
+      },
+
+      attached: function() {
+        this.splitSelector = "equal";
+
+        db.ref("pots/" + this.pot + "/users/").on("value", function(snapshot) {
+          this.updatePayer(snapshot);
+        }.bind(this));
+      },
+
+      updatePayer: function(snapshot) {
+        this.payers = [];
+        snapshot.forEach(function(childSnapshot) {
+          var item = childSnapshot.val();
+          item.uid = childSnapshot.key;
+          this.push('payers', item);
+        }.bind(this));
+      }
+    });
+  </script>
+</dom-module>

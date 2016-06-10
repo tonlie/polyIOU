@@ -1,0 +1,112 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-input/iron-input.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../bower_components/gold-email-input/gold-email-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+
+<!-- Routing -->
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+
+<link rel="import" href="splash-page.html" />
+<link rel="import" href="new-page.html" />
+<link rel="import" href="pot-page.html" />
+
+<script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCacfOs5B8kNnP7ZH9_4BSPxulYuYuY86w",
+    authDomain: "flickering-inferno-8428.firebaseapp.com",
+    databaseURL: "https://flickering-inferno-8428.firebaseio.com",
+    storageBucket: "flickering-inferno-8428.appspot.com",
+  };
+  firebase.initializeApp(config);
+
+  var db = firebase.database();
+</script>
+
+<dom-module id="polyIOU-app">
+  <template>
+    <style is="custom-style">
+      :host {
+        display: block;
+        --accent-color: #3f51b5;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+    </style>
+
+    <!-- Routing -->
+    <app-location route="{{route}}"
+                  use-hash-as-path>
+    </app-location>
+    <app-route route="{{route}}"
+               pattern="/"
+               active="{{splashActive}}">
+    </app-route>
+    <!-- new page route -->
+    <app-route route={{route}}
+               pattern="/new"
+               active="{{newActive}}">
+    </app-route>
+    <!-- pot page route -->
+    <app-route route={{route}}
+               pattern="/pot/:id"
+               active="{{potActive}}"
+               data="{{potData}}">
+    </app-route>
+
+    <iron-selector selected="[[routeData.page]]"
+                   attr-for-selected="data-page">
+      <a data-page="splash" href="#/">Splash/Home</a>
+      <a data-page="new" href="#/new"> New/Add pot</a>
+      <a data-page="pot" href="#/pot/-KJaHLTdpnyhODpZP5MO"> Pot</a>
+    </iron-selector>
+
+    <h2>Hello [[prop1]]</h2>
+
+    <splash-page active="{{splashActive}}"></splash-page>
+    <new-page active="{{newActive}}"></new-page>
+    <pot-page active="{{potActive}}"
+              pot="{{potData.id}}"></pot-page>
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'polyIOU-app',
+
+      properties: {
+        prop1: {
+          type: String,
+          value: 'polyIOU-app',
+        },
+      },
+
+      attached: function() {
+        // set splash-page as standard/landing page
+        if(!this.route.path) {
+          this.set('route.path', '/');
+        }
+      },
+
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,30 @@
+<dom-module id="splash-page">
+  <style>
+    :host {
+      display: none;
+    }
+    :host([active]) {
+      display: block;
+    }
+  </style>
+  <template>
+
+    <h3>This is the <b>Splash</b>-Page</h3>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: "splash-page",
+
+      properties: {
+        active: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true
+        }
+      }
+
+    });
+  </script>
+</dom-module>

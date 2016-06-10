@@ -1,0 +1,92 @@
+<link rel="import" href="elements/user-list.html">
+<link rel="import" href="elements/add-payment.html">
+
+<dom-module id="pot-page">
+  <style>
+    :host {
+      display: none;
+    }
+    :host([active]) {
+      display: block;
+      --accent-color: #3f51b5;
+    }
+    paper-tabs {
+      background-color: var(--accent-color);
+      color: #fff;
+    }
+  </style>
+  <template>
+
+    <h3>This is the <b>Pot</b>-Page showing Pot-#: [[pot]]</h3>
+
+    <paper-material elevation="1">
+      <paper-tabs id="tabs" selected="{{selected}}">
+        <paper-tab>Overview</paper-tab>
+        <paper-tab>Add Item</paper-tab>
+        <paper-tab>Participants</paper-tab>
+      </paper-tabs>
+
+      <iron-pages selected="{{selected}}">
+        <section id="sectionOverview">
+          <h2>[[potName]]</h2>
+          <h4>[[description]]</h4>
+        </section>
+        <section id="sectionAddItem">
+          <add-payment pot="[[pot]]"></add-payment>
+        </section>
+        <section id="sectionUserList">
+          <user-list db="[[db]]" pot="[[pot]]"></user-list>
+        </section>
+      </iron-pages>
+    </paper-material>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: "pot-page",
+
+      properties: {
+        active: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true
+        },
+        pot: {
+          type: String,
+          reflectToAttribute: true
+        },
+        data: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      observers: [
+        '_updateData(data)'
+      ],
+
+      _updateData(data) {
+        console.log('updateData says: ' + data);
+        // only run this on first update
+        if(!this.potName) {
+          this.potName = data.name;
+          this.description = data.description;
+        }
+      },
+
+      attached: function() {
+        // show Overview
+        this.selected = 0;
+
+        if(this.pot) {
+          // get pot data
+          db.ref("pots/" + this.pot).on('value', function(snapshot) {
+            this.data = snapshot.val();
+          }.bind(this));
+        }
+      }
+
+    });
+  </script>
+</dom-module>

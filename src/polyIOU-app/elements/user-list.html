@@ -1,0 +1,102 @@
+<dom-module id="user-list">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: sans-serif;
+      }
+      #addFab {
+        position: absolute;
+        right: 16px;
+        top: 20px;
+        @apply(--shadow-elevation-6dp);
+      }
+    </style>
+
+    <template is="dom-repeat" items="[[users]]" as="user">
+      <paper-icon-item id="[[user.uid]]">
+        <iron-icon icon="icons:perm-identity" item-icon stye="height:24px;"></iron-icon>
+        <paper-item-body two-line>
+          <div>[[user.name]]</div>
+          <div secondary>[[user.email]]</div>
+        </paper-item-body>
+      </paper-icon-item>
+    </template>
+
+    <paper-fab id="addFab" icon="add" title="Add user" on-tap="openUserDiag"></paper-fab>
+
+    <paper-dialog id="newUserDiag">
+      <h2>Add user</h2>
+      <paper-dialog-scrollable>
+        <paper-input
+          id="nameInput"
+          label="Name"
+          required
+          auto-validate
+          error-message="Empty input!">
+        </paper-input>
+        <gold-email-input id="emailInput" value="" required auto-validate>
+        </gold-email-input>
+        <div class="buttons">
+          <paper-button dialog-confirm autofocus on-tap="saveUser">Save</paper-button>
+          <paper-button dialog-dismiss>Cancel</paper-button>
+        </div>
+      </paper-dialog-scrollable>
+    </paper-dialog>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'user-list',
+
+      properties: {
+
+        pot: {
+          type: String,
+          notify: true
+        }
+      },
+
+      observers: [
+        '_updatePot(pot)'
+      ],
+
+      _updatePot: function(pot) {
+        console.log('updatePot says: ' + pot);
+
+        if(this.pot) {
+          db.ref('pots/'+this.pot+'/users/').on("value", function(snapshot) {
+            this.updateUsers(snapshot);
+          }.bind(this));
+        }
+      },
+
+      attached: function() {
+      },
+
+      updateUsers: function(snapshot) {
+        this.users = [];
+        snapshot.forEach(function(childSnapshot) {
+          var item = childSnapshot.val();
+          item.uid = childSnapshot.key;
+          this.push('users', item);
+        }.bind(this));
+      },
+
+      saveUser: function() {
+        var newUserKey = db.ref().child('/pots/'+this.pot+'/users/').push().key;
+
+        db.ref().child('/pots/'+this.pot+'/users/' + newUserKey).set({
+          name: this.$.nameInput.value,
+          email: this.$.emailInput.value
+        });
+      },
+
+      openUserDiag: function() {
+        this.$.newUserDiag.open();
+      }
+
+    });
+  </script>
+</dom-module>

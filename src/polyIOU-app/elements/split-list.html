@@ -1,0 +1,95 @@
+<dom-module id="split-list">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+  <template>
+
+    <template is="dom-repeat"
+              items="[[data]]"
+              index-as="index">
+      <paper-icon-item id="[[item.uid]]">
+        <paper-icon-button icon="icons:delete" alt="remove payer"></paper-icon-button>
+        <paper-item-body>
+          <div>
+            [[item.name]]
+            <input is="iron-input"
+                   name="percent"
+                   hidden$="[[_showPercent(splitSelector)]]">
+            </input>
+            <input is="iron-input"
+                   name="amount"
+                   disabled$="[[_isAmountDisabled(splitSelector)]]"
+                   value="{{item.amount}}"></input>
+          </div>
+        </paper-item-body>
+      </paper-icon-item>
+    </template>
+
+    total: [[total]]
+    <br />
+    splitSelector: [[splitSelector]]
+
+  </template>
+
+  <script>
+    Polymer({
+      is: "split-list",
+
+      properties: {
+        total: {
+          type: Number,
+          reflectToAttribute: true
+        },
+        splitSelector: {
+          type: String,
+          reflectToAttribute: true
+        },
+        data: {
+          type: Object,
+          reflectToAttribute: true
+        }
+      },
+
+      observers: [
+        'splitSelectorChanged(splitSelector)'
+      ],
+
+      attached: function() {
+      },
+
+      _showPercent: function(splitSelector) {
+        if(splitSelector == "percent")
+          return false;
+        else
+          return true;
+      },
+
+      _isAmountDisabled: function(splitSelector) {
+        if(splitSelector == "fixed")
+          return false;
+        else {
+          return true;
+        }
+      },
+
+      splitSelectorChanged: function(splitSelector) {
+        if(this.total) {
+          if(splitSelector == "equal") {
+            var amountPerPerson = this.total / this.data.length;
+
+          }
+          else if (splitSelector == "percent") {
+
+          }
+          // splitSelector == "fixed"
+          else {
+
+          }
+        }
+      }
+
+    });
+  </script>
+</dom-module>
