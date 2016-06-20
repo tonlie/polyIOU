@@ -16,7 +16,8 @@
             [[item.name]]
             <input is="iron-input"
                    name="percent"
-                   hidden$="[[_showPercent(splitSelector)]]">
+                   hidden$="[[_showPercent(splitSelector)]]"
+                   value="[[item.amount]]">
             </input>
             <input is="iron-input"
                    name="amount"
@@ -78,7 +79,9 @@
         if(this.total) {
           if(splitSelector == "equal") {
             var amountPerPerson = this.total / this.data.length;
-
+            this.data.for(function(index, value) {
+              value.amount = amountPerPerson;
+            });
           }
           else if (splitSelector == "percent") {
 
