@@ -16,13 +16,13 @@
             [[item.name]]
             <input is="iron-input"
                    name="percent"
-                   hidden$="[[_showPercent(splitSelector)]]"
-                   value="[[item.amount]]">
+                   hidden$="[[_showPercent(splitSelector)]]">
             </input>
             <input is="iron-input"
                    name="amount"
                    disabled$="[[_isAmountDisabled(splitSelector)]]"
-                   value="{{item.amount}}"></input>
+                   value="[[item.amount]]">
+            </input>
           </div>
         </paper-item-body>
       </paper-icon-item>
@@ -54,7 +54,8 @@
       },
 
       observers: [
-        'splitSelectorChanged(splitSelector)'
+        'splitSelectorChanged(splitSelector)',
+        '_totalChanged(total)'
       ],
 
       attached: function() {
@@ -79,9 +80,16 @@
         if(this.total) {
           if(splitSelector == "equal") {
             var amountPerPerson = this.total / this.data.length;
-            this.data.for(function(index, value) {
-              value.amount = amountPerPerson;
-            });
+            for (var key in this.data) {
+              if(!this.data.hasOwnProperty(key)) continue;
+
+              var obj = this.data[key];
+              obj.amount = amountPerPerson;
+
+              // TODO: update automatically using data-binding?
+              this.$$('#' + obj.uid).querySelector('[name="amount"]').value =
+                Math.round(amountPerPerson * 100) / 100;
+            }
           }
           else if (splitSelector == "percent") {
 
@@ -91,6 +99,10 @@
 
           }
         }
+      },
+
+      _totalChanged: function(total) {
+        this.splitSelectorChanged(this.splitSelector);
       }
 
     });

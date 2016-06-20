@@ -4,6 +4,7 @@
   <style>
     :host {
       display: block;
+      margin: 6px 10px;
     }
 
     paper-card {
@@ -27,56 +28,56 @@
   </style>
   <template>
 
-    <paper-card heading="Add payment">
-      <div class="card-content">
-        <paper-input id="inputItemName" label="Item name"></paper-input>
-        <paper-input id="inputItemAmount"
-                     label="Amount"
-                     type="number"
-                     value={{total}}>
-          <div suffix> €</div>
-        </paper-input>
+    <paper-input id="inputItemName"
+                 label="Item name"
+                 required
+                 auto-validate
+                 error-message="Empty input!"></paper-input>
+    <paper-input id="inputItemAmount"
+                 label="Amount"
+                 type="number"
+                 value={{total}}
+                 required
+                 auto-validate
+                 error-message="Empty input!">
+      <div suffix> €</div>
+    </paper-input>
 
-        <!-- payer dropdown -->
-        <paper-dropdown-menu label="Payer">
-          <paper-listbox id="payerListbox"
-                         class="dropdown-content"
-                         selected="{{selectedPayer}}"
-                         attr-for-selected="id">
-            <template is="dom-repeat"
-                      items="[[payers]]"
-                      as="payer"
-                      index-as="index">
-              <paper-item id="[[payer.uid]]">[[payer.name]]</paper-item>
-            </template>
-          </paper-listbox>
-        </paper-dropdown-menu>
-        <br />
+    <!-- payer dropdown -->
+    <paper-dropdown-menu label="Payer">
+      <paper-listbox id="payerListbox"
+                     class="dropdown-content"
+                     selected="{{selectedPayer}}"
+                     attr-for-selected="id">
+        <template is="dom-repeat"
+                  items="[[payers]]"
+                  as="payer"
+                  index-as="index">
+          <paper-item id="[[payer.uid]]">[[payer.name]]</paper-item>
+        </template>
+      </paper-listbox>
+    </paper-dropdown-menu>
+    <br />
 
-        <!-- Split selector -->
-        <label id="splitSelectorLabel">Split</label>
-        <paper-radio-group selected="{{splitSelector}}"
-                           aria-labelledby="splitSelectorLabel">
-          <paper-radio-button name="equal">equal</paper-radio-button>
-          <paper-radio-button name="percent">percentage</paper-radio-button>
-          <paper-radio-button name="fixed">fixed</paper-radio-button>
-        </paper-radio-group>
+    <!-- Split selector -->
+    <label id="splitSelectorLabel">Split</label>
+    <paper-radio-group selected="{{splitSelector}}"
+                       aria-labelledby="splitSelectorLabel">
+      <paper-radio-button name="equal">equal</paper-radio-button>
+      <paper-radio-button name="percent">percentage</paper-radio-button>
+      <paper-radio-button name="fixed">fixed</paper-radio-button>
+    </paper-radio-group>
 
-        <!-- split overview -->
-        <split-list data="[[payers]]"
-                    total="[[total]]"
-                    split-selector="[[splitSelector]]">
-        </split-list>
-      </div>
+    <!-- split overview -->
+    <split-list data="{{payers}}"
+                total="[[total]]"
+                split-selector="[[splitSelector]]">
+    </split-list>
 
-      <!-- Buttons -->
-      <div class="card-actions">
-        <paper-button raised>Add payment</paper-button>
-        <paper-button raised>Add another payment</paper-button>
-        <paper-button raised>Cancel</paper-button>
-      </div>
-    </paper-card>
-
+    <!-- Buttons -->
+    <paper-button raised on-tap="addPayment">Add payment</paper-button>
+    <paper-button raised>Add another payment</paper-button>
+    <paper-button raised>Cancel</paper-button>
 
     <br />
     Selected Payer: [[selectedPayer]]
@@ -112,6 +113,29 @@
           item.uid = childSnapshot.key;
           this.push('payers', item);
         }.bind(this));
+      },
+
+      addPayment: function() {
+        console.log("add button clicked...");
+
+        if(this.$.inputItemName.validate() &&
+           this.$.inputItemAmount.validate() &&
+           this.$.inputItemAmount.value > 0 &&
+           this.selectedPayer != '') {
+
+          var newPaymentKey = db.ref().child('/pots/'+this.pot+'/payments/').push().key;
+
+          db.ref().child('/pots/'+this.pot+'/payments/' + newPaymentKey).set({
+            name: this.$.inputItemName.value,
+            total: this.total,
+            payer: this.selectedPayer,
+            type: this.splitSelector,
+            payers: this.payers
+          });
+
+          // once done, jump to overview
+          document.querySelector('#tabs').select(0);
+        }
       }
     });
   </script>
