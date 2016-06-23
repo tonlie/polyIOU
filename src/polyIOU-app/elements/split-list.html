@@ -6,28 +6,55 @@
   </style>
   <template>
 
-    <template is="dom-repeat"
+    <template id="list"
+              is="dom-repeat"
               items="[[data]]"
               index-as="index">
       <paper-icon-item id="[[item.uid]]">
-        <paper-icon-button icon="icons:delete" alt="remove payer"></paper-icon-button>
         <paper-item-body>
           <div>
             [[item.name]]
             <input is="iron-input"
-                   name="percent"
-                   hidden$="[[_showPercent(splitSelector)]]">
+                   name="[[item.uid]]"
+                   class="percentInput"
+                   hidden$="[[_showPercent(splitSelector)]]"
+                   value="{{item.percent}}"
+                   on-blur="_blurPercent">
             </input>
             <input is="iron-input"
                    name="amount"
                    disabled$="[[_isAmountDisabled(splitSelector)]]"
-                   value="[[item.amount]]">
+                   value="{{item.amount}}"
+                   on-blur="_blurAmount">
             </input>
           </div>
         </paper-item-body>
+        <paper-icon-button icon="icons:delete"
+                           alt="remove payer"
+                           on-tap="_removePayer">
+        </paper-icon-button>
       </paper-icon-item>
     </template>
 
+    <!-- removedPayer dropdown -->
+    <paper-dropdown-menu id="listBoxMenu"
+                         label="Add payer"
+                         hidden$="[[_hideRemovedPayerListbox(removedPayers)]]">
+      <paper-listbox id="removedPayerListbox"
+                     class="dropdown-content"
+                     selected="{{selectedRemovedPayer}}"
+                     attr-for-selected="id"
+                     iron-select="_removedPayersListboxChanged">
+        <template is="dom-repeat"
+                  items="[[removedPayers]]"
+                  as="payer"
+                  index-as="index">
+          <paper-item id="[[payer.uid]]">[[payer.name]]</paper-item>
+        </template>
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+    <br />
     total: [[total]]
     <br />
     splitSelector: [[splitSelector]]
@@ -50,6 +77,9 @@
         data: {
           type: Object,
           reflectToAttribute: true
+        },
+        removedPayers: {
+          type: Object
         }
       },
 
@@ -59,6 +89,30 @@
       ],
 
       attached: function() {
+        this.removedPayers = [];
+      },
+
+      _removePayer: function(){
+        var index = event.model.get('index');
+        this.push('removedPayers', this.splice('data', index, 1));
+        this.$.listBoxMenu.hidden = false;
+        console.log('removedPayers: ' + this.removedPayers);
+      },
+
+      _removedPayersListboxChanged: function() {
+        var index = event.model.get('index');
+        this.push('data', this.splice('removedPayers', index, 1));
+
+        // hide listbox when no removed payers left
+        if(this._hideRemovedPayerListbox(this.removedPayers))
+          this.$.listBoxMenu.hidden = true;
+      },
+
+      _hideRemovedPayerListbox: function(removedPayers) {
+        if(this.removedPayers.length < 1)
+          return true;
+        else
+          return false;
       },
 
       _showPercent: function(splitSelector) {
@@ -76,35 +130,127 @@
         }
       },
 
-      splitSelectorChanged: function(splitSelector) {
-        if(this.total) {
-          if(splitSelector == "equal") {
+      // event.model gives direct access to the data through the dom-repeat
+      _blurPercent: function() {
+        event.model.set('item.percent', event.target.value);
+        event.model.set('item.percentSet', true);
+        this.recalc();
+      },
+
+      _blurAmount: function() {
+        event.model.set('item.amount', event.target.value);
+        event.model.set('item.amountSet', true);
+        this.recalc();
+      },
+
+      recalc: function() {
+        if(this.splitSelector == "equal") {
+          if(this.total) {
             var amountPerPerson = this.total / this.data.length;
             for (var key in this.data) {
               if(!this.data.hasOwnProperty(key)) continue;
 
               var obj = this.data[key];
-              obj.amount = amountPerPerson;
+              // obj.amount = amountPerPerson;
 
-              // TODO: update automatically using data-binding?
-              this.$$('#' + obj.uid).querySelector('[name="amount"]').value =
-                Math.round(amountPerPerson * 100) / 100;
+              // TODO: update automatically using data-binding? - DONE :D
+              // this.$$('#' + obj.uid).querySelector('[name="amount"]').value =
+              //   Math.round(amountPerPerson * 100) / 100;
+
+              this.set("data." + key + ".amount",
+                Math.round(amountPerPerson * 100) / 100);
             }
           }
-          else if (splitSelector == "percent") {
+        }
+        else if (this.splitSelector == "percent") {
+          // 1. prüfen, bei wem alles percentSet, damit rest prozent berechnen
+          var totalPercent = 100;
+          var payerCounter = this.data.length;
+          if(this.total)
+            var totalAmount = this.total;
 
+          for(var key in this.data) {
+            if(!this.data.hasOwnProperty(key)) continue;
+
+            var payer = this.data[key];
+
+            if(payer.percentSet) {
+              totalPercent -= payer.percent;
+              payerCounter -= 1;
+              // 2. dabei gleich die amounts für diese berechnen und vom total
+              //    abziehen wenn total gegeben...
+              if(this.total) {
+                this.set("data." + key + ".amount",
+                  Math.round(((this.total / 100) * payer.percent) * 100) / 100);
+                totalAmount -= this.get("data." + key + ".amount");
+              }
+            }
           }
-          // splitSelector == "fixed"
-          else {
+          // 3. bei allen ohne percentSet, restPercent und restAmount eintragen
+          if(payerCounter > 0) {
+            let percentLeftDivided = totalPercent / payerCounter;
+            if(this.total)
+              var amountLeftDivided =
+                Math.round((totalAmount / payerCounter) * 100) / 100;
 
+            for(var key in this.data) {
+              if(!this.data.hasOwnProperty(key)) continue;
+
+              var payer = this.data[key];
+
+              if(!payer.percentSet) {
+                this.set("data." + key + ".percent",percentLeftDivided);
+                if(this.total)
+                  this.set("data." + key + ".amount",amountLeftDivided);
+              }
+            }
+          }
+        }
+        // splitSelector == "fixed"
+        else {
+          if(this.total) {
+            // 1. prüfen, bei wem alles amountSet, damit rest amount berechnen
+            var payerCounter = this.data.length;
+            var totalAmount = this.total;
+
+            for(var key in this.data) {
+              if(!this.data.hasOwnProperty(key)) continue;
+
+              var payer = this.data[key];
+
+              if(payer.amountSet) {
+                payerCounter -= 1;
+                // 2. dabei gleich die amounts für diese berechnen und vom total
+                //    abziehen wenn total gegeben...
+                totalAmount -= this.get("data." + key + ".amount");
+              }
+            }
+            // 3. bei allen ohne amountSet, restAmount eintragen
+            if(payerCounter > 0) {
+              var amountLeftDivided =
+                Math.round((totalAmount / payerCounter) * 100) / 100;
+
+              for(var key in this.data) {
+                if(!this.data.hasOwnProperty(key)) continue;
+
+                var payer = this.data[key];
+
+                if(!payer.amountSet) {
+                  this.set("data." + key + ".amount",amountLeftDivided);
+                }
+              }
+            }
           }
         }
       },
 
-      _totalChanged: function(total) {
-        this.splitSelectorChanged(this.splitSelector);
-      }
+      splitSelectorChanged: function(splitSelector) {
+        this.recalc();
+      },
 
+      _totalChanged: function(total) {
+        this.recalc();
+      }
     });
   </script>
 </dom-module>

@@ -69,15 +69,16 @@
     </paper-radio-group>
 
     <!-- split overview -->
-    <split-list data="{{payers}}"
+    <split-list id="spitList"
+                data="{{payers}}"
                 total="[[total]]"
                 split-selector="[[splitSelector]]">
     </split-list>
 
     <!-- Buttons -->
-    <paper-button raised on-tap="addPayment">Add payment</paper-button>
-    <paper-button raised>Add another payment</paper-button>
-    <paper-button raised>Cancel</paper-button>
+    <paper-button raised on-tap="addPaymentTap">Add payment</paper-button>
+    <paper-button raised on-tap="addAnotherPaymentTap">Add another payment</paper-button>
+    <paper-button raised on-tap="cancelTap">Cancel</paper-button>
 
     <br />
     Selected Payer: [[selectedPayer]]
@@ -115,7 +116,35 @@
         }.bind(this));
       },
 
-      addPayment: function() {
+      addPaymentTap: function() {
+        this._addPayment();
+
+        // once done, jump to overview
+        document.querySelector('#tabs').select(0);
+      },
+
+      addAnotherPaymentTap: function() {
+        this._addPayment();
+        this._clearInput();
+      },
+
+      cancelTap: function() {
+        this._clearInput();
+
+        // jump to overview
+        document.querySelector('#tabs').select(0);
+      },
+
+      _clearInput: function() {
+        // clear all inputs
+        this.$.inputItemName.value = "";
+        this.$.inputItemAmount.value = "";
+        this.total = 0;
+        this.total = "";
+        this.selectedPayer = "";
+      },
+
+      _addPayment: function() {
         console.log("add button clicked...");
 
         if(this.$.inputItemName.validate() &&
@@ -132,9 +161,6 @@
             type: this.splitSelector,
             payers: this.payers
           });
-
-          // once done, jump to overview
-          document.querySelector('#tabs').select(0);
         }
       }
     });
