@@ -3,6 +3,12 @@
     :host {
       display: block;
     }
+    paper-item {
+      width: 100px;
+      padding: 6px 10px;
+      margin: 2px 5px;
+      display: block;
+    }
   </style>
   <template>
 
@@ -43,8 +49,7 @@
       <paper-listbox id="removedPayerListbox"
                      class="dropdown-content"
                      selected="{{selectedRemovedPayer}}"
-                     attr-for-selected="id"
-                     iron-select="_removedPayersListboxChanged">
+                     >
         <template is="dom-repeat"
                   items="[[removedPayers]]"
                   as="payer"
@@ -85,34 +90,45 @@
 
       observers: [
         'splitSelectorChanged(splitSelector)',
-        '_totalChanged(total)'
+        '_totalChanged(total)',
+        '_selectedRemovedPayerChanged(selectedRemovedPayer)'
       ],
 
       attached: function() {
         this.removedPayers = [];
       },
 
-      _removePayer: function(){
-        var index = event.model.get('index');
-        this.push('removedPayers', this.splice('data', index, 1));
-        this.$.listBoxMenu.hidden = false;
-        console.log('removedPayers: ' + this.removedPayers);
+      _selectedRemovedPayerChanged: function() {
+        if(this.selectedRemovedPayer !== "") {
+          var item = this.splice('removedPayers', this.selectedRemovedPayer, 1);
+          this.push('data', item[0]);
+
+          // hide listbox when no removed payers left
+          if(this._hideRemovedPayerListbox(this.removedPayers))
+            this.$.listBoxMenu.hidden = true;
+
+          this.$.removedPayerListbox.select("");
+          this.selectedRemovedPayer = "";
+          this.recalc();
+        }
       },
 
-      _removedPayersListboxChanged: function() {
+      _removePayer: function(){
         var index = event.model.get('index');
-        this.push('data', this.splice('removedPayers', index, 1));
+        var item = this.splice('data', index, 1);
 
-        // hide listbox when no removed payers left
-        if(this._hideRemovedPayerListbox(this.removedPayers))
-          this.$.listBoxMenu.hidden = true;
+        this.push('removedPayers', item[0]);
+        this.$.listBoxMenu.hidden = false;
+        this.recalc();
+        console.log('removedPayers: ' + this.removedPayers);
       },
 
       _hideRemovedPayerListbox: function(removedPayers) {
         if(this.removedPayers.length < 1)
           return true;
-        else
+        else {
           return false;
+        }
       },
 
       _showPercent: function(splitSelector) {
